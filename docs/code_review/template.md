@@ -1,0 +1,1 @@
+Review this codebase for correctness, safety, and maintainability issues. Focus on bugs, logic errors, missing validation, data loss risks, and cases where the code diverges from documented behavior. For each finding, state what's wrong, why it matters, where in the code it occurs, and how severe it is (high/medium/low).
