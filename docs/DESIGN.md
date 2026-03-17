@@ -12,8 +12,7 @@ br ships a v0.1 pure-Rust SQLite reimplementation (frankensqlite) and 75K lines 
 
 ```
 bt init [--prefix <pfx>]         Create .beads/ and empty issues.jsonl
-bt q <title> [-p N] [-t TYPE]    Quick-create issue, print ID only
-bt create <title> [flags]        Create issue with full options
+bt create <title> [flags]        Create issue (-q for ID-only output)
 bt list [--status S] [--all]     List issues (default: open)
 bt show <id>                     Show full issue details
 bt ready                         Open + unblocked + not deferred
@@ -27,9 +26,8 @@ bt dep list <id>                 Show dependencies
 ### Non-goals
 
 - No SQL, no database, no sync protocol
-- No TUI, no rich rendering, no themes
+- No full TUI — but uses lipgloss for styled output and huh for interactive forms
 - No self-update, no schema command, no audit log
-- No AGENTS.md management
 - No config file system (flags and env vars only)
 
 ## Data model
@@ -81,7 +79,7 @@ bt reads and writes the same fields br uses. Unknown fields are preserved on rou
 
 ### ID generation
 
-`<prefix>-<4 chars>` where chars are base36 (a-z0-9), derived from a hash of timestamp + random bytes. Collisions checked against existing IDs.
+`<prefix>-<N base36 chars>` (a-z0-9), derived from SHA256 of `title|desc|creator|timestamp|nonce` — deterministic, no random bytes. Adaptive suffix length based on issue count (3 chars for <50 issues, 4 for <1600, grows as needed). Nonce increments on collision.
 
 ### Statuses
 
@@ -108,11 +106,11 @@ Integer 0-4. Accepts `P0`-`P4` or `0`-`4` on input, stores as integer.
 - Prefix resolution: `--prefix` flag, else directory name
 - For existing workspaces: read prefix from `.beads/config.yaml` (`issue_prefix` key)
 
-### `bt q` / `bt create`
+### `bt create`
 
-- `q` prints only the new ID (for scripting / agent use)
-- `create` prints full confirmation
-- Both append one line to issues.jsonl
+- Prints full confirmation by default
+- `-q` / `--quiet` prints only the new ID (for scripting / agent use)
+- Appends one line to issues.jsonl
 - `--parent <id>` adds a parent-child dependency
 
 ### `bt list`
@@ -125,9 +123,8 @@ Integer 0-4. Accepts `P0`-`P4` or `0`-`4` on input, stores as integer.
 
 ### `bt ready`
 
-- Start with `list` (open + in_progress only)
-- Exclude deferred
-- Build blocker map: for each issue, collect `depends_on_id` where type is `blocks` and the depended-on issue is still open
+- Start with all issues, exclude terminal statuses (`TerminalStatuses`), deferred, and blocked
+- Build blocker map: for each remaining issue, collect `depends_on_id` where type is a blocking dep type and the depended-on issue is not in a terminal status
 - Exclude issues that have any open blocker
 - Sort by priority then age
 
@@ -169,17 +166,24 @@ Users can type `a1b` instead of `bt-a1b2`. If the fragment matches exactly one i
 ### Structure
 
 ```
-main.go              CLI routing (cobra)
-issue.go             Issue struct, JSONL read/write, ID gen
+main.go              Entry point
 cmd/
+  root.go            CLI routing, help text (cobra)
   init.go
-  create.go          (also handles q)
+  create.go          (handles -q/--quiet for ID-only output)
   list.go
   show.go
   ready.go
   update.go
   close.go
   dep.go
+  epic.go
+  archive.go
+  prompt.go
+  picker.go          Interactive issue picker (huh)
+internal/
+  issue.go           Issue struct, JSONL read/write, ID gen
+  table.go           Table rendering (lipgloss)
 ```
 
 ### JSONL I/O
@@ -194,9 +198,12 @@ Key detail: unmarshal into both a typed `Issue` struct and a `map[string]any`. O
 ### Dependencies
 
 - `github.com/spf13/cobra` — CLI framework
-- Standard library for everything else (encoding/json, os, time, crypto/rand)
+- `github.com/charmbracelet/lipgloss` — terminal styling
+- `github.com/charmbracelet/huh` — interactive prompts
+- `github.com/mattn/go-isatty` — TTY detection
+- Standard library for everything else (encoding/json, os, time, crypto/sha256)
 
-That's it. No SQLite, no HTTP, no TLS.
+No SQLite, no HTTP, no TLS.
 
 ## Compatibility
 

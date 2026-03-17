@@ -72,13 +72,16 @@ Stored inline in each issue's `dependencies` array. Each entry has `issue_id`, `
 ## Commands Quick Reference
 
 - `bt init [--prefix pfx]` — create `.beads/` dir, empty `issues.jsonl`, `.gitignore` for SQLite files
-- `bt create <title>` — create an issue (`-q` for ID-only output)
+- `bt create <title>` — create an issue
 - `bt list [--status S] [--all]` — list issues, default non-terminal
 - `bt show <id>` — full issue details
 - `bt ready` — open + in_progress, not deferred, no open blockers
 - `bt update <id> [flags]` — update fields; `--claim` sets assignee=$USER + status=in_progress
 - `bt close <id> [--reason "..."]` — close issue
 - `bt dep add|rm|list <id> [<blocked-by>]` — manage dependencies
+- `bt epic create|list|show` — manage epics
+- `bt archive --before <date>` — move old closed issues to archive.jsonl
+- `bt prompt [--inject <file>]` — add issue tracking docs to AGENTS.md or CLAUDE.md
 - All read commands support `--json` for machine-readable output
 
 ## Testing

@@ -72,8 +72,8 @@ This project uses **bt** for issue tracking. Issues live in `.beads/issues.jsonl
 ```bash
 bt ready                                   # what to work on next (open, unblocked, not deferred)
 bt show <id>                               # full issue details + dependencies
-bt q "title" -p 2 -t bug                   # quick-file an issue (prints ID only)
-bt create "title" -d "..." -t feature      # file an issue (verbose)
+bt create "title" -p 2 -t bug              # file an issue
+bt create "title" -q                       # quiet mode — prints only the ID (for scripting)
 bt update <id> --claim                     # assign to self + mark in_progress
 bt close <id>                              # mark work done
 bt dep add <issue> <blocked-by>            # wire a dependency

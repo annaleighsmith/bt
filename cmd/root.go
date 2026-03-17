@@ -35,7 +35,7 @@ var helpGroups = []commandGroup{
 		{"prompt", "Add issue tracking docs to AGENTS.md or CLAUDE.md"},
 	}},
 	{"Track", []helpEntry{
-		{"create", "Create a new issue (-q for ID-only output)"},
+		{"create", "Create a new issue"},
 		{"update", "Update an issue"},
 		{"close", "Close an issue"},
 	}},

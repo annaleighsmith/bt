@@ -21,7 +21,7 @@ Epic subtasks use `<parent>.<n>` format: `bt-a1b2.1`, `bt-a1b2.2`
 
 ### Prefix
 
-Configured at `bt init --prefix <pfx>`, stored in `.beads/metadata.json`, defaults to directory name.
+Configured at `bt init --prefix <pfx>`, stored in `.beads/config.yaml` (`issue_prefix` key), defaults to directory name.
 
 ## File Concurrency
 
@@ -38,17 +38,11 @@ tmp.Close()
 os.Rename(tmp.Name(), jsonlPath)
 ```
 
-### Advisory file lock (if needed)
+### Advisory file lock
 
-Not implemented initially — the write is microseconds and real concurrent access is prevented by git's serialization. If it ever matters:
+All write commands acquire an exclusive `flock` on `.beads/issues.lock` via `internal.LockBeads()`. Read commands use a shared lock. This serializes concurrent writes — multiple agents can read simultaneously, but writes queue behind the lock.
 
-```go
-f, _ := os.OpenFile(path, os.O_RDWR, 0644)
-syscall.Flock(int(f.Fd()), syscall.LOCK_EX)
-defer syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
-```
-
-This blocks a second bt process until the first finishes. Overkill for now, trivial to add later.
+Each write holds the lock for a few milliseconds, so even dozens of agents writing back-to-back serialize quickly.
 
 ## Round-trip Safety
 

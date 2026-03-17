@@ -30,7 +30,7 @@ go test -bench=. -benchmem ./cmd/               # Go-native function benchmarks
 
 ### Writes (median of 3 runs)
 
-| Count | tool | q | update | close | dep add |
+| Count | tool | create -q | update | close | dep add |
 |------:|------|--:|-------:|------:|--------:|
 | 100 | bt | 5 ms | 5 ms | 5 ms | 5 ms |
 | 100 | br | 68 ms | 25 ms | 23 ms | 24 ms |
@@ -41,7 +41,7 @@ go test -bench=. -benchmem ./cmd/               # Go-native function benchmarks
 
 - bt writes scale linearly (full file rewrite) but stay fast under 5K
 - br writes are constant-time but have higher fixed cost (SQLite WAL, fsync)
-- br's `q` (create) is notably slow (~65ms) due to index overhead
+- br's create is notably slow (~65ms) due to index overhead
 
 ## Agent workflow benchmarks (bt vs br)
 
@@ -49,9 +49,9 @@ These simulate real agent scripting patterns — multi-command chains with JSON 
 
 | Workflow | bt | br | Speedup |
 |----------|---:|---:|--------:|
-| AI Sprint (q×20 → list --json → claim×5 → close×5) | 97 ms | 2,811 ms | **29x** |
-| Dep Chain (q×10 → chain deps → close bottom-up) | 105 ms | 3,548 ms | **34x** |
-| Bulk Ops (q×50 → claim×10 → close×10 → verify) | 206 ms | 8,831 ms | **43x** |
+| AI Sprint (create -q ×20 → list --json → claim×5 → close×5) | 97 ms | 2,811 ms | **29x** |
+| Dep Chain (create -q ×10 → chain deps → close bottom-up) | 105 ms | 3,548 ms | **34x** |
+| Bulk Ops (create -q ×50 → claim×10 → close×10 → verify) | 206 ms | 8,831 ms | **43x** |
 | JSON Pipe (create → ready --json → jq → claim) ×10 | 84 ms | 1,879 ms | **22x** |
 
 bt is **20-43x faster** for agent workflows. br's per-command overhead (~60-180ms for writes) compounds across multi-command chains. bt's JSONL read-all/write-all approach has lower per-command cost at typical project scale.
@@ -64,7 +64,7 @@ N processes launched simultaneously against a workspace with 50 pre-seeded issue
 bash benchmark/concurrent_run.sh
 ```
 
-### Concurrent writes (N parallel `q` creates)
+### Concurrent writes (N parallel `create -q`)
 
 | N | bt | br | Speedup |
 |--:|---:|---:|--------:|
