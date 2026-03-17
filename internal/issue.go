@@ -95,7 +95,7 @@ func LoadIssues(path string) ([]IssueRecord, error) {
 
 	var records []IssueRecord
 	scanner := bufio.NewScanner(f)
-	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+	scanner.Buffer(make([]byte, 1024*1024), 16*1024*1024)
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {

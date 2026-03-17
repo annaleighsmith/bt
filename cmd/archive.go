@@ -73,13 +73,9 @@ func init() {
 				return archive[i].Issue.ID < archive[j].Issue.ID
 			})
 
-			// Remove from issues first (atomic via temp+rename), then append to archive.
-			// If we crash after step 1, issues are gone but not archived — recoverable from git.
-			// The reverse (archive first) risks duplicates across both files.
-			if err := internal.SaveIssues(issuesPath, keep); err != nil {
-				return err
-			}
-
+			// Write to archive first, then remove from issues.
+			// If we crash after step 1, we get duplicates — easy to dedupe.
+			// The reverse risks data loss if the user hasn't committed to git.
 			f, err := os.OpenFile(archivePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 			if err != nil {
 				return err
@@ -95,6 +91,10 @@ func init() {
 				}
 			}
 			if err := f.Close(); err != nil {
+				return err
+			}
+
+			if err := internal.SaveIssues(issuesPath, keep); err != nil {
 				return err
 			}
 
