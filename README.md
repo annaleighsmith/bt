@@ -50,15 +50,13 @@ bt uses `flock` to serialize writes to the JSONL file. Multiple agents can read 
 
 In practice this is fine for most setups. Each write holds the lock for a few milliseconds, so even 30 agents writing back-to-back serialize in ~120ms total. If you need dozens of agents writing *sustained* high-throughput, bt isn't the right tool — use something with a real database.
 
-## Performance
+## Related Projects
 
-bt is optimized for the typical project scale (< 2-3K issues). Benchmarked on Apple M4:
+bt is part of the [beads](https://github.com/steveyegge/beads) ecosystem. All three tools read and write the same `.beads/issues.jsonl` format and can share a workspace.
 
-- **Single commands**: single-digit ms for reads and writes under 1K issues
-- **Agent workflows** (multi-command chains): 20-command chains complete in ~100ms
-- **Concurrent access**: 50 parallel writes in ~49ms, 50 parallel reads in ~28ms — flock serialization is ~1ms/op
-
-Full results in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+- **[beads](https://github.com/steveyegge/beads)** (Go) — the original. Part of a larger ecosystem (GasTown) with Dolt-backed storage, git hooks, merge drivers, Linear integration, and more.
+- **[beads_rust](https://github.com/Dicklesworthstone/beads_rust)** (Rust) — a Rust port with a SQLite backend.
+- **bt** (Go) — a minimal alternative that skips the database entirely. JSONL is the source of truth, `flock` handles concurrency. Optimized for small-to-medium projects (< 2-3K issues) where per-command speed matters more than query power.
 
 ## Suggested AGENTS.md Section
 
